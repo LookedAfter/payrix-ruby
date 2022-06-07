@@ -11,4 +11,5 @@ require "payrix"
 # Pry.start
 
 require "irb"
+require "pry"
 IRB.start(__FILE__)
