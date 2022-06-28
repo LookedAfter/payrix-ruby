@@ -32,21 +32,21 @@ It is based on [Payrix Rest API](https://docs.rest.paymentsapi.io/) built for ou
     + GET Search for transaction status changes
     + POST Acknowledge transaction status change
 
-Add new API into `lib/resource` directory.
+Add new API into `lib/payrix/resource` directory.
 
 
 Flow
 Once you provide API `username` and `userkey` at configuration. At Every call of api it will check the authentication and login using `POST - Login` if token is expired or not found.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/payrix`. To experiment with that code, run `bin/console` for an interactive prompt.
-
 There are no test coverage written for gem.
+
+
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'payrix-ruby'
+gem 'payrix-ruby', git: 'https://github.com/LookedAfter/payrix-ruby'
 ```
 
 And then execute:
