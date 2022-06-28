@@ -1,29 +1,12 @@
 module Payrix
   module Http
     class Response
-      attr_reader :status
+      attr_reader :status, :body
 
       def initialize(response = {}, status = '', cls)
-        @response = response
+        @body = response
         @status = status
         @cls = cls
-      end
-
-      # Return the response as an array
-      def response
-        @response
-      end
-
-      def errors
-        @response['errors'] || (@response['response'] && @response['response']['errors']) || []
-      end
-
-      def has_errors?
-        !errors.empty?
-      end
-
-      def details
-        (@response['response'] && @response['response']['details']) || {}
       end
 
       def totals
