@@ -34,7 +34,7 @@ module Payrix
       end
 
       def to_json(nested = false)
-        excludes = ['request_options', 'resource_name', 'response', 'attrs']
+        excludes = ['request_options', 'parent_resource', 'resource_name', 'response', 'attrs']
 
         instance_variables.inject({}) do |hash, var|
           key = var.to_s.delete('@')
@@ -76,145 +76,54 @@ module Payrix
         @response.nil? ? true : @response.has_more?
       end
 
-      def get(params = {})
-        set(params)
-
-        headers = build_headers
-
-        search = build_search(to_json)
-        search += "&#{request_options.sort}" if request_options
-        headers['SEARCH'] = search
-
-        headers['Content-Type'] = "application/json"
-        query_params = []
-        if request_options
-          query_params << request_options.expand unless request_options.expand == ''
-          query_params << request_options.page if request_options.page
-          if request_options.totals
-            headers['TOTALS'] = request_options.totals
-          end
-        end
-
-        method = 'get'
-        url = Payrix.configuration.url
-        endpoint = "#{@resource_name}?#{query_params.join('&')}"
-        data = {}
-
-        body, status = Payrix::Http::Request.instance.send_http(method, url, endpoint, data, headers)
-        @response = Payrix::Http::Response.new(body, status, self.class)
-
-        success = validate_response
-        request_options.go_next_page if success
-
-        success
-      end
-
-      def post(params = {})
-        set(params)
-
-        headers = build_headers
-        headers['Content-Type'] = "application/json"
-        query_params = []
-        if request_options
-          query_params << request_options.expand unless request_options.expand == ''
-        end
-
-        method = 'post'
-        url = Payrix.configuration.url
-        endpoint = query_params.length < 1 ? resource_name : "#{@resource_name}?#{query_params.join('&')}"
-        data = to_json
-        body, status = Payrix::Http::Request.instance.send_http(method, url, endpoint, data, headers)
-        @response = Payrix::Http::Response.new(body, status, self.class)
-
-        validate_response
-      end
-
-      def put(params = {})
-        set(params)
-
-        if !id
-          if Payrix.configuration.exception_enabled
-            raise Payrix::Exceptions::InvalidRequest.new('ID is required for this action')
-          else
-            return false
-          end
-        end
-
-        headers = build_headers
-        headers['Content-Type'] = "application/json"
-        method = 'put'
-        url = Payrix.configuration.url
-        endpoint = "#{@resource_name}/#{id}"
-        data = to_json
-
-        body, status = Payrix::Http::Request.instance.send_http(method, url, endpoint, data, headers)
-        @response = Payrix::Http::Response.new(body, status, self.class)
-
-        validate_response
-      end
-
-      def delete(params = {})
-        set(params)
-
-        if !id
-          if Payrix.configuration.exception_enabled
-            raise Payrix::Exceptions::InvalidRequest.new('ID is required for this delete')
-          else
-            return false
-          end
-        end
-
-        headers = build_headers
-        headers['Content-Type'] = "application/json"
-        method = 'delete'
-        url = Payrix.configuration.url
-        endpoint = "#{@resource_name}/#{id}"
-        data = {}
-
-        body, status = Payrix::Http::Request.instance.send_http(method, url, endpoint, data, headers)
-        @response = Payrix::Http::Response.new(body, status, self.class)
-
-        validate_response
-      end
-
     protected
       def build_headers()
         config = Payrix.configuration
 
         if !config.url
-          raise Payrix::Exceptions::InvalidRequest.new('Invalid URL')
+          raise Payrix::InvalidRequestError.new('Invalid URL')
         end
 
         headers = {}
 
         if config.bearer_token
-          headers['Authorization'] = "Bearer #{config.token}"
+          headers['Authorization'] = "Bearer #{config.bearer_token}"
         end
-
+        headers['Content-Type'] = "application/json"
         headers
       end
 
-      def build_search(values = {})
+      def build_query_params(values = {})
         values
           .delete_if { |k, v| v.nil? || v.empty? }
-          .map { |k, v| "#{k}[equals]=#{v}" }
+          .map { |k, v| v.is_a?(Array) ? v.map {|x| "#{k}=#{x}"}.joins('&') : "#{k}=#{v}" }
           .join('&')
       end
 
-      def validate_response
-        if @response.has_errors?
-          if Payrix.configuration.exception_enabled
-            raise Payrix::Exceptions::ApiError.new('There are errors in the response')
-          end
+      def process_http(method, url, endpoint, data, headers, timeout=nil)
+        @response = nil # clear response for new request
+        begin
+          response = Payrix::Http::Request.instance.send_http(method, url, endpoint, data, headers, timeout)
+          body = response.body
+          status = response.status
+          json = body.present? ? JSON.parse(body) : ''
+          @response = Payrix::Http::Response.new(json, status, self.class)
+        rescue JSON::ParserError
+          raise Payrix::InvalidResponseError.new('Invalid response object')
+        rescue Payrix::Error => e
+          body = e.response[:body]
+          json = (body || '').length >=2 ? JSON.parse(e.response[:body]) : {}
+          @response = Payrix::Http::ErrorResponse.new(json, e.response[:status], self.class, e.class)
+        end
+        validate_response
+      end
 
+      def validate_response
+        if @response.class == Payrix::Http::ErrorResponse
           false
         else
           true
         end
-      end
-
-      def errors
-        @response.nil? ? [] : @response.errors
       end
     end
   end
