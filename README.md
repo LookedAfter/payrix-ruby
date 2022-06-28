@@ -1,9 +1,46 @@
 # Payrix::Ruby
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/payrix/ruby`. To experiment with that code, run `bin/console` for an interactive prompt.
+It is based on [Payrix Rest API](https://docs.rest.paymentsapi.io/) built for our project. It has not included all the APIs. Below are API included:
+* Authorizing Your Request
+  - POST - Login
 
-TODO: Delete this and the text above, and describe your gem
+* BPAY
+  - GET Payers CRN
+  - POST A CRN to an existing Payer
+  - POST Assing new CRN
 
+* Business Details
+  - GET Your business details
+
+* Payers
+  - Add and Edit Payer
+    + POST Add a new Payer
+    + PUT Update an existing Payer
+    + PUT Add or update a Payers card details
+    + POT Add or update a Payers card details via token
+  - Delete a Payer
+    + DEL Remove a Payers payment methods
+  - Search Payer Details
+    + GET Look up a Payer payment options
+
+* Transactions
+  - Create Card Transaction
+    + POST Make a live tokenized card transaction
+  - Saved Card Transaction
+    + POST Process a transaction using saved card details
+  - Status Changes
+    + GET Search for transaction status changes
+    + POST Acknowledge transaction status change
+
+Add new API into `lib/resource` directory.
+
+
+Flow
+Once you provide API `username` and `userkey` at configuration. At Every call of api it will check the authentication and login using `POST - Login` if token is expired or not found.
+
+Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/payrix`. To experiment with that code, run `bin/console` for an interactive prompt.
+
+There are no test coverage written for gem.
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -21,8 +58,21 @@ Or install it yourself as:
     $ gem install payrix-ruby
 
 ## Usage
-
-TODO: Write usage instructions here
+```
+Payrix.configure(sandbox: true) do |config|
+  config.log_level = :debug
+  config.api_username = <API_USERNAME>
+  config.api_userkey = <API_USERKEY>
+end
+```
+```
+b=Payrix::Resource::Businesses.new({})
+if b.status(<Business Id>)
+  b.response.body # Success Response Type
+else
+  b.response.body # Error Response Type
+end
+```
 
 ## Development
 
@@ -41,7 +91,3 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Code of Conduct
 
 Everyone interacting in the Payrix::Ruby project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/payrix-ruby/blob/master/CODE_OF_CONDUCT.md).
-
-
-Payrix::configuration(auth: true, sandbox: true)
-login=Payrix::Resource::Auth.login('90106.1456', '53e9c4dc-13e3-4168-afda-786683a23d8f')
