@@ -46,7 +46,7 @@ There are no test coverage written for gem.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'payrix-ruby', git: 'https://github.com/LookedAfter/payrix-ruby'
+gem 'payrix-ruby', git: 'https://github.com/LookedAfter/payrix-ruby', require: 'payrix'
 ```
 
 And then execute:
