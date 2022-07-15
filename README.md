@@ -31,6 +31,8 @@ It is based on [Payrix Rest API](https://docs.rest.paymentsapi.io/) built for ou
   - Status Changes
     + GET Search for transaction status changes
     + POST Acknowledge transaction status change
+  - Refund transaction
+    + POST Refund bank transaction
 
 Add new API into `lib/payrix/resource` directory.
 

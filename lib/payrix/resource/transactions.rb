@@ -125,6 +125,31 @@ module Payrix
         @resource_name = @parent_resource + "new"
         post(params)
       end
+
+      def refund_bank_transaction(transactiond_id, params)
+        # transaction_id Payrix's unique identifier for the transaction
+        # params = {
+        #     "Reference": "REFUND-TXN-111",
+        #     "Description": "This is a refund example",
+        #     "Amount": 10.25,
+        #     "Audit": {
+        #       "Username": "Example-User",
+        #       "UserIP": "1.2.3.4"
+        #     }
+        # }
+
+        if !transactiond_id
+          if Payrix.configuration.exception_enabled
+            raise Payrix::InvalidRequestError.new('Transaction id is required for refund.')
+          else
+            return false
+          end
+        end
+
+        Payrix::ApiAuth.check_and_login
+        @resource_name = @parent_resource + "bank-payments/#{transactiond_id}/refunds"
+        post(params)
+      end
     end
   end
 end
